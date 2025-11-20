@@ -51,27 +51,39 @@ if args.dataset == "gtea":
 if args.dataset == 'breakfast':
     lr = 0.0001
 
+base_data_path = "/home/mw/input/50salads14791479/50salads/50salads"
 
-vid_list_file = "./data/"+args.dataset+"/splits/train.split"+args.split+".bundle"
-vid_list_file_tst = "./data/"+args.dataset+"/splits/test.split"+args.split+".bundle"
-features_path = "./data/"+args.dataset+"/features/"
-gt_path = "./data/"+args.dataset+"/groundTruth/"
- 
-mapping_file = "./data/"+args.dataset+"/mapping.txt"
- 
-model_dir = "./{}/".format(args.model_dir)+args.dataset+"/split_"+args.split
+# 使用 os.path.join 构建路径
+vid_list_file = os.path.join(base_data_path, "splits", f"train.split{args.split}.bundle")
+vid_list_file_tst = os.path.join(base_data_path, "splits", f"test.split{args.split}.bundle")
+features_path = os.path.join(base_data_path, "features")
+gt_path = os.path.join(base_data_path, "groundTruth")
+mapping_file = os.path.join(base_data_path, "mapping.txt")
 
-results_dir = "./{}/".format(args.result_dir)+args.dataset+"/split_"+args.split
- 
-if not os.path.exists(model_dir):
-    os.makedirs(model_dir)
-if not os.path.exists(results_dir):
-    os.makedirs(results_dir)
- 
- 
-file_ptr = open(mapping_file, 'r')
-actions = file_ptr.read().split('\n')[:-1]
-file_ptr.close()
+# 确保目录路径以斜杠结尾
+features_path = features_path + "/" if not features_path.endswith("/") else features_path
+gt_path = gt_path + "/" if not gt_path.endswith("/") else gt_path
+
+# 模型和结果目录（在本地）
+model_dir = os.path.join(".", args.model_dir, args.dataset, f"split_{args.split}")
+results_dir = os.path.join(".", args.result_dir, args.dataset, f"split_{args.split}")
+
+# 创建输出目录
+os.makedirs(model_dir, exist_ok=True)
+os.makedirs(results_dir, exist_ok=True)
+
+# 验证输入文件存在
+required_files = [mapping_file, vid_list_file, vid_list_file_tst]
+missing_files = [f for f in required_files if not os.path.exists(f)]
+if missing_files:
+    print("错误: 以下文件不存在:")
+    for f in missing_files:
+        print(f"  {f}")
+    exit(1)
+
+# 读取映射文件
+with open(mapping_file, 'r') as file_ptr:
+    actions = file_ptr.read().split('\n')[:-1]
 actions_dict = dict()
 for a in actions:
     actions_dict[a.split()[1]] = int(a.split()[0])
